@@ -15,7 +15,7 @@ class StorageManager {
     
     // MARK: - Core Data stack
     // "Точка входа" в БД
-    lazy var persistentContainer: NSPersistentContainer = {
+    var persistentContainer: NSPersistentContainer = {
 
         let container = NSPersistentContainer(name: "Taski")
         container.loadPersistentStores(completionHandler: { (storeDescription, error) in

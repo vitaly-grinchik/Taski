@@ -132,3 +132,8 @@ extension TaskListViewController {
         return cell
     }
 }
+
+// MARK: - UITableViewDelegate
+extension TaskListViewController {
+    
+}
