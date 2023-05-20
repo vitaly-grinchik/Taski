@@ -60,12 +60,12 @@
 			children = (
 				D84613C32A16180D005FD747 /* AppDelegate.swift */,
 				D84613C52A16180D005FD747 /* SceneDelegate.swift */,
+				D876DAF72A18F9B600201CA2 /* StorageManager.swift */,
 				D84613C72A16180D005FD747 /* TaskListViewController.swift */,
 				D84613CF2A161816005FD747 /* Assets.xcassets */,
 				D84613D12A161816005FD747 /* LaunchScreen.storyboard */,
 				D84613D42A161816005FD747 /* Info.plist */,
 				D84613CC2A16180D005FD747 /* Taski.xcdatamodeld */,
-				D876DAF72A18F9B600201CA2 /* StorageManager.swift */,
 			);
 			path = Taski;
 			sourceTree = "<group>";

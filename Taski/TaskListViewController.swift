@@ -9,6 +9,7 @@ import UIKit
 
 class TaskListViewController: UITableViewController {
 
+    // Доступ к зоне ОЗУ с объектами БД
     private let viewContext = StorageManager.shared.persistentContainer.viewContext
     
     private let cellID = "taskCell"
@@ -88,7 +89,7 @@ class TaskListViewController: UITableViewController {
         alert.addAction(cancelAction)
         // Добавление текстового поля
         alert.addTextField { textField in
-            textField.placeholder = "New task"
+            textField.placeholder = "Task name"
         }
         
         present(alert, animated: true)
