@@ -8,14 +8,6 @@
 import UIKit
 
 class TaskListViewController: UITableViewController {
-
-    // Варианты Alert Controller
-    private enum AlertType: String {
-        case addTask = "Add task"
-        case editTask = "Edit task"
-        case deleteTask = "Delete task"
-        case nameErrorMessage = "Task name already exists"
-    }
     
     // Доступ к зоне ОЗУ с объектами БД
     private let viewContext = StorageManager.shared.persistentContainer.viewContext
@@ -27,7 +19,7 @@ class TaskListViewController: UITableViewController {
     lazy private var addButton = UIBarButtonItem(
         barButtonSystemItem: .add,
         target: self,
-        action: #selector(addTask)
+        action: #selector(addButtonTapped)
     )
     
     private let appColor = UIColor(
@@ -37,10 +29,32 @@ class TaskListViewController: UITableViewController {
         alpha: 194/255
     )
     
-    // Handlers контекстного свайпа
-    private let editRowHandler: (() -> Void) = { print("Edit row finished") }
+    lazy private var cancelAction = UIAlertAction(title: "Cancel",
+                                             style: .default) { [unowned self] _ in
+        dismiss(animated: true)
+    }
     
-    private let deleteRowHandler: (() -> Void) = { print("Deletion finished") }
+    lazy private var saveAction = UIAlertAction(title: "Save",
+                                                style: .default) { [unowned self] _ in
+        
+    }
+    
+    lazy private var deleteAction: UIContextualAction = {
+        let delete = UIContextualAction(style: .destructive, title: "") {_, _, _ in
+            print("Deleting ....")
+        }
+        delete.image = UIImage(systemName: "trash")
+        return delete
+    }()
+    
+    lazy private var editAction: UIContextualAction = {
+        let edit = UIContextualAction(style: .normal, title: "") {_, _, _ in
+            print("Editing ....")
+        }
+        edit.backgroundColor = #colorLiteral(red: 0.4745098054, green: 0.8392156959, blue: 0.9764705896, alpha: 1)
+        edit.image = UIImage(systemName: "pencil.line")
+        return edit
+    }()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -73,12 +87,26 @@ class TaskListViewController: UITableViewController {
     }
     
     // MARK: - Add, edit, delete task records
-    @objc private func addTask() {
-        showAlert(ofType: .addTask,
-                         withTitle: "New task",
-                         andMessage: "Add task title"
-        )
+    @objc private func addButtonTapped() {
+        showAlert(withTitle: "New task",
+                  andMessage: "Add new task?",
+                  usingTextField: true,
+                  andActions: cancelAction, saveAction) { [weak self] task in
+            self?.addTask(task)
+        }
         
+    }
+    
+    private func addTask(_ taskTitle: String){
+        // Инициализация экземпляра модели в контексте
+        let task = Task(context: viewContext)
+        task.title = taskTitle
+        
+        taskList.append(task)
+        let indexPath = IndexPath(row: taskList.count - 1, section: 0)
+        tableView.insertRows(at: [indexPath], with: .automatic)
+        
+        saveContext()
     }
     
     private func deleteTask(_ task: Task) {
@@ -90,14 +118,6 @@ class TaskListViewController: UITableViewController {
         
     }
     
-    private func checkForTitleUnique(_ taskTitle: String) -> Bool {
-        for task in taskList {
-            if task.title == taskTitle {
-                return true
-            }
-        }
-        return false
-    }
     // MARK: - Fetch and save data
     private func fetchData() {
         // Указываем, какой тип данных нужно извлечь из БД -> тип Task
@@ -110,7 +130,7 @@ class TaskListViewController: UITableViewController {
         }
     }
     
-    private func saveData() {
+    private func saveContext() {
         if viewContext.hasChanges {
             do {
                 try viewContext.save()
@@ -120,56 +140,12 @@ class TaskListViewController: UITableViewController {
         }
     }
     
-    // MARK: - Alert controller configuration
-    private func showAlert(ofType alertType: AlertType, withTitle title: String, andMessage message: String) {
-        // Инициализация контроллера
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        // Определение действий
-        let saveAction = UIAlertAction(title: "Save", style: .default) { [unowned self] _ in
-            dismiss(animated: true)
-            guard let task = alert.textFields?.first?.text, !task.isEmpty else { return }
-//            saveTask(task)
-        }
-        let deleteAction = UIAlertAction(title: "Delete", style: .destructive) { [unowned self] _ in
-            dismiss(animated: true)
-        }
-        let cancelAction = UIAlertAction(title: "Cancel", style: .default) { [unowned self] _ in
-            dismiss(animated: true)
-        }
-        
-        // Привязка действий к контроллеру в зависимости от действия с задачей
-        switch alertType {
-        case .addTask:
-            // Добавление текстового поля
-            // Пустое текстовое поле (с placeholder)
-            alert.addTextField { textField in
-                textField.clearButtonMode = .whileEditing
-                textField.placeholder = "Task name"
-            }
-            alert.addAction(saveAction)
-            alert.addAction(cancelAction)
-        case .editTask:
-            // Текстовое поле с повторением названия задачи
-            alert.addTextField { textField in
-                textField.clearButtonMode = .whileEditing
-                //                textField.text = title
-            }
-            alert.addAction(saveAction)
-            alert.addAction(cancelAction)
-        case .deleteTask:
-            alert.addAction(deleteAction)
-            alert.addAction(cancelAction)
-        case .nameErrorMessage:
-            alert.addAction(cancelAction)
-        }
-        present(alert, animated: true)
-    }
-
     
 }
 
 // MARK: - UITableViewDataSource
 extension TaskListViewController {
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         taskList.count
     }
@@ -188,27 +164,33 @@ extension TaskListViewController {
 extension TaskListViewController {
     
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let editRowAction = UIContextualAction(style: .normal, title: nil) { [unowned self] _, _, _ in
-            
-            showAlert(ofType: .editTask,
-                      withTitle: "Edit task",
-                      andMessage: "Change task name?"
-            )
-        }
-        editRowAction.backgroundColor = #colorLiteral(red: 0.4666666687, green: 0.7647058964, blue: 0.2666666806, alpha: 1)
-        editRowAction.image = UIImage(systemName: "pencil.line")
-        
-        let deleteRowAction = UIContextualAction(style: .destructive, title: nil) { [unowned self] _, _, _ in
-            print("Deleting...")
-            deleteRowHandler()
-        }
-        deleteRowAction.image = UIImage(systemName: "trash")
-        
-        let swipeConfig = UISwipeActionsConfiguration(actions: [deleteRowAction, editRowAction])
+        let swipeConfig = UISwipeActionsConfiguration(actions: [deleteAction, editAction])
         // Не выполнять первое действия при полном свайпе
-//        swipeConfig.performsFirstActionWithFullSwipe = false
-        
+        swipeConfig.performsFirstActionWithFullSwipe = false
         return swipeConfig
     }
+
+}
+
+extension TaskListViewController {
     
+    private func showAlert(withTitle title: String,
+                      andMessage message: String?,
+                      usingTextField withTextField: Bool,
+                      andActions actions: UIAlertAction...,
+                           compleationHandler: (String) -> Void)
+    {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        if withTextField {
+            alert.addTextField()
+            alert.textFields?.forEach { $0.clearsOnBeginEditing = true }
+        }
+        actions.forEach {alert.addAction($0) }
+        
+        if let text = alert.textFields?.first?.text {
+            compleationHandler(text)
+        }
+        
+        present(alert, animated: true)
+    }
 }
