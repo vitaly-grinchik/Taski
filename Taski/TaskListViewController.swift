@@ -189,8 +189,13 @@ extension TaskListViewController {
         swipeConfig.performsFirstActionWithFullSwipe = false
         return swipeConfig
     }
-
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
     }
+    
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        taskList.isEmpty ? "No task found" : nil
+    }
+    
 }
