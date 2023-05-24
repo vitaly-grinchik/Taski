@@ -29,11 +29,9 @@ class TaskListViewController: UITableViewController {
         alpha: 194/255
     )
     
-    // MARK: - Actions
     lazy private var cancelAction = UIAlertAction(title: "Cancel",
-                                             style: .default) { [unowned self] _ in
-        dismiss(animated: true)
-    }
+                                             style: .destructive)
+    { [unowned self] _ in dismiss(animated: true) }
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -65,7 +63,7 @@ class TaskListViewController: UITableViewController {
     
     }
     
-    // MARK: - Add, edit, delete task records
+    // MARK: - Add task
     @objc private func addButtonTapped() {
         let alert = UIAlertController(title: "New task",
                                       message: "Add new task?",
@@ -89,8 +87,8 @@ class TaskListViewController: UITableViewController {
         }
         alert.addTextField()
         alert.textFields?.forEach { $0.clearButtonMode = .whileEditing }
-        alert.addAction(cancelAction)
         alert.addAction(saveAction)
+        alert.addAction(cancelAction)
         present(alert, animated: true)
     }
 
@@ -115,7 +113,6 @@ class TaskListViewController: UITableViewController {
             }
         }
     }
-    
     
 }
 
@@ -144,7 +141,8 @@ extension TaskListViewController {
         let deleteAction: UIContextualAction = {
             let delete = UIContextualAction(style: .destructive, title: "")
             { [unowned self] _, _, _ in
-                taskList.remove(at: indexPath.row)
+                let task = taskList.remove(at: indexPath.row)
+                viewContext.delete(task)
                 tableView.deleteRows(at: [indexPath], with: .automatic)
                 saveContext()
             }
