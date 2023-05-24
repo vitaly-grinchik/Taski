@@ -29,8 +29,7 @@ class TaskListViewController: UITableViewController {
         alpha: 194/255
     )
     
-    lazy private var cancelAction = UIAlertAction(title: "Cancel",
-                                             style: .destructive)
+    lazy private var cancelAction = UIAlertAction(title: "Cancel", style: .destructive)
     { [unowned self] _ in dismiss(animated: true) }
     
     override func viewDidLoad() {
@@ -86,7 +85,8 @@ class TaskListViewController: UITableViewController {
             }
         }
         alert.addTextField()
-        alert.textFields?.forEach { $0.clearButtonMode = .whileEditing }
+        alert.textFields?.first?.placeholder = "New task"
+        alert.textFields?.first?.clearButtonMode = .whileEditing
         alert.addAction(saveAction)
         alert.addAction(cancelAction)
         present(alert, animated: true)
@@ -137,7 +137,7 @@ extension TaskListViewController {
 extension TaskListViewController {
     
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        
+        // Delete swipe action
         let deleteAction: UIContextualAction = {
             let delete = UIContextualAction(style: .destructive, title: "")
             { [unowned self] _, _, _ in
@@ -150,9 +150,10 @@ extension TaskListViewController {
             return delete
         }()
         
+        // Edit swipe action with alert
         let editAction: UIContextualAction = {
             let edit = UIContextualAction(style: .normal, title: "")
-            { [unowned self] _, _, _ in
+            { [unowned self] _, _, completionHandler in
                 let alert = UIAlertController(title: "Edit task",
                                               message: nil,
                                               preferredStyle: .alert)
@@ -178,6 +179,8 @@ extension TaskListViewController {
                 alert.addAction(saveAction)
                 alert.addAction(cancelAction)
                 present(alert, animated: true)
+                // dismiss swipe
+                completionHandler(true)
             }
             edit.image = UIImage(systemName: "pencil.line")
             return edit
@@ -189,21 +192,4 @@ extension TaskListViewController {
         return swipeConfig
     }
 
-}
-
-extension TaskListViewController {
-
-    private func showAlert(withTitle title: String,
-                      andMessage message: String?,
-                      usingTextField withTextField: Bool,
-                      andActions actions: UIAlertAction...)
-    {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        if withTextField {
-            alert.addTextField()
-            alert.textFields?.forEach { $0.clearButtonMode = .whileEditing }
-        }
-        actions.forEach {alert.addAction($0) }
-        present(alert, animated: true)
-    }
 }
