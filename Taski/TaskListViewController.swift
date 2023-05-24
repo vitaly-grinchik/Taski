@@ -35,28 +35,6 @@ class TaskListViewController: UITableViewController {
         dismiss(animated: true)
     }
     
-//    lazy private var saveAction = UIAlertAction(title: "Save",
-//                                                style: .default) { [unowned self] _ in
-//
-//    }
-    
-    lazy private var deleteAction: UIContextualAction = {
-        let delete = UIContextualAction(style: .destructive, title: "") {_, _, _ in
-            print("Deleting ....")
-        }
-        delete.image = UIImage(systemName: "trash")
-        return delete
-    }()
-    
-    lazy private var editAction: UIContextualAction = {
-        let edit = UIContextualAction(style: .normal, title: "") {_, _, _ in
-            print("Editing ....")
-        }
-        edit.backgroundColor = #colorLiteral(red: 0.1764705926, green: 0.4980392158, blue: 0.7568627596, alpha: 1)
-        edit.image = UIImage(systemName: "pencil.line")
-        return edit
-    }()
-    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Регистрация ячеки таблицы
@@ -110,23 +88,12 @@ class TaskListViewController: UITableViewController {
             }
         }
         alert.addTextField()
+        alert.textFields?.forEach { $0.clearButtonMode = .whileEditing }
         alert.addAction(cancelAction)
         alert.addAction(saveAction)
         present(alert, animated: true)
     }
-    
-    private func addTask(_ taskTitle: String){
-    }
-    
-    private func deleteTask(_ task: Task) {
-        guard let index = taskList.firstIndex(of: task) else { return }
-        taskList.remove(at: index)
-    }
-    
-    private func editTask(_ task: Task) {
-        
-    }
-    
+
     // MARK: - Fetch and save data
     private func fetchData() {
         // Указываем, какой тип данных нужно извлечь из БД -> тип Task
@@ -173,6 +140,51 @@ extension TaskListViewController {
 extension TaskListViewController {
     
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        
+        let deleteAction: UIContextualAction = {
+            let delete = UIContextualAction(style: .destructive, title: "")
+            { [unowned self] _, _, _ in
+                taskList.remove(at: indexPath.row)
+                tableView.deleteRows(at: [indexPath], with: .automatic)
+                saveContext()
+            }
+            delete.image = UIImage(systemName: "trash")
+            return delete
+        }()
+        
+        let editAction: UIContextualAction = {
+            let edit = UIContextualAction(style: .normal, title: "")
+            { [unowned self] _, _, _ in
+                let alert = UIAlertController(title: "Edit task",
+                                              message: nil,
+                                              preferredStyle: .alert)
+                
+                let saveAction = UIAlertAction(title: "Save",
+                                               style: .default) { [unowned self] _ in
+                    
+                    
+                    guard let taskName = alert.textFields?.first?.text else { return }
+                    
+                    if !taskName.isEmpty {
+                        taskList[indexPath.row].title = taskName
+                        tableView.reloadRows(at: [indexPath], with: .automatic)
+                    }
+                    saveContext()
+                }
+                
+                alert.addTextField()
+                alert.textFields?.forEach { $0.clearButtonMode = .whileEditing }
+                // Вывод имеющеготся названия задачи в текстовон поле
+                let taskName = taskList[indexPath.row].title
+                alert.textFields?.first?.text = taskName
+                alert.addAction(saveAction)
+                alert.addAction(cancelAction)
+                present(alert, animated: true)
+            }
+            edit.image = UIImage(systemName: "pencil.line")
+            return edit
+        }()
+        
         let swipeConfig = UISwipeActionsConfiguration(actions: [deleteAction, editAction])
         // Не выполнять первое действия при полном свайпе
         swipeConfig.performsFirstActionWithFullSwipe = false
@@ -182,7 +194,7 @@ extension TaskListViewController {
 }
 
 extension TaskListViewController {
-    
+
     private func showAlert(withTitle title: String,
                       andMessage message: String?,
                       usingTextField withTextField: Bool,
@@ -194,11 +206,6 @@ extension TaskListViewController {
             alert.textFields?.forEach { $0.clearButtonMode = .whileEditing }
         }
         actions.forEach {alert.addAction($0) }
-        
-        if let text = alert.textFields?.first?.text {
-            
-        }
-        
         present(alert, animated: true)
     }
 }
