@@ -29,15 +29,16 @@ class TaskListViewController: UITableViewController {
         alpha: 194/255
     )
     
+    // MARK: - Actions
     lazy private var cancelAction = UIAlertAction(title: "Cancel",
                                              style: .default) { [unowned self] _ in
         dismiss(animated: true)
     }
     
-    lazy private var saveAction = UIAlertAction(title: "Save",
-                                                style: .default) { [unowned self] _ in
-        
-    }
+//    lazy private var saveAction = UIAlertAction(title: "Save",
+//                                                style: .default) { [unowned self] _ in
+//
+//    }
     
     lazy private var deleteAction: UIContextualAction = {
         let delete = UIContextualAction(style: .destructive, title: "") {_, _, _ in
@@ -51,7 +52,7 @@ class TaskListViewController: UITableViewController {
         let edit = UIContextualAction(style: .normal, title: "") {_, _, _ in
             print("Editing ....")
         }
-        edit.backgroundColor = #colorLiteral(red: 0.4745098054, green: 0.8392156959, blue: 0.9764705896, alpha: 1)
+        edit.backgroundColor = #colorLiteral(red: 0.1764705926, green: 0.4980392158, blue: 0.7568627596, alpha: 1)
         edit.image = UIImage(systemName: "pencil.line")
         return edit
     }()
@@ -88,25 +89,33 @@ class TaskListViewController: UITableViewController {
     
     // MARK: - Add, edit, delete task records
     @objc private func addButtonTapped() {
-        showAlert(withTitle: "New task",
-                  andMessage: "Add new task?",
-                  usingTextField: true,
-                  andActions: cancelAction, saveAction) { [weak self] task in
-            self?.addTask(task)
-        }
+        let alert = UIAlertController(title: "New task",
+                                      message: "Add new task?",
+                                      preferredStyle: .alert)
         
+        let saveAction = UIAlertAction(title: "Save",
+                                       style: .default) { [unowned self] _ in
+            
+            guard let taskName = alert.textFields?.first?.text else { return }
+            
+            if !taskName.isEmpty {
+                // Инициализация экземпляра модели в контексте
+                let task = Task(context: viewContext)
+                task.title = taskName
+                taskList.append(task)
+                let indexPath = IndexPath(row: taskList.count - 1, section: 0)
+                tableView.insertRows(at: [indexPath], with: .automatic)
+                
+                saveContext()
+            }
+        }
+        alert.addTextField()
+        alert.addAction(cancelAction)
+        alert.addAction(saveAction)
+        present(alert, animated: true)
     }
     
     private func addTask(_ taskTitle: String){
-        // Инициализация экземпляра модели в контексте
-        let task = Task(context: viewContext)
-        task.title = taskTitle
-        
-        taskList.append(task)
-        let indexPath = IndexPath(row: taskList.count - 1, section: 0)
-        tableView.insertRows(at: [indexPath], with: .automatic)
-        
-        saveContext()
     }
     
     private func deleteTask(_ task: Task) {
@@ -177,18 +186,17 @@ extension TaskListViewController {
     private func showAlert(withTitle title: String,
                       andMessage message: String?,
                       usingTextField withTextField: Bool,
-                      andActions actions: UIAlertAction...,
-                           compleationHandler: (String) -> Void)
+                      andActions actions: UIAlertAction...)
     {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
         if withTextField {
             alert.addTextField()
-            alert.textFields?.forEach { $0.clearsOnBeginEditing = true }
+            alert.textFields?.forEach { $0.clearButtonMode = .whileEditing }
         }
         actions.forEach {alert.addAction($0) }
         
         if let text = alert.textFields?.first?.text {
-            compleationHandler(text)
+            
         }
         
         present(alert, animated: true)
