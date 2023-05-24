@@ -70,9 +70,7 @@ class TaskListViewController: UITableViewController {
         
         let saveAction = UIAlertAction(title: "Save",
                                        style: .default) { [unowned self] _ in
-            
             guard let taskName = alert.textFields?.first?.text else { return }
-            
             if !taskName.isEmpty {
                 // Инициализация экземпляра модели в контексте
                 let task = Task(context: viewContext)
@@ -192,4 +190,7 @@ extension TaskListViewController {
         return swipeConfig
     }
 
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: true)
+    }
 }
