@@ -79,7 +79,7 @@ class TaskListViewController: UITableViewController {
                 let indexPath = IndexPath(row: taskList.count - 1, section: 0)
                 tableView.insertRows(at: [indexPath], with: .automatic)
                 
-                saveContext()
+                StorageManager.shared.saveContext()
             }
         }
         alert.addTextField()
@@ -99,16 +99,6 @@ class TaskListViewController: UITableViewController {
             taskList = try viewContext.fetch(fetchRequest)
         } catch {
             print(error.localizedDescription)
-        }
-    }
-    
-    private func saveContext() {
-        if viewContext.hasChanges {
-            do {
-                try viewContext.save()
-            } catch let error {
-                print(error.localizedDescription)
-            }
         }
     }
     
@@ -142,7 +132,7 @@ extension TaskListViewController {
                 let task = taskList.remove(at: indexPath.row)
                 viewContext.delete(task)
                 tableView.deleteRows(at: [indexPath], with: .automatic)
-                saveContext()
+                StorageManager.shared.saveContext()
             }
             delete.image = UIImage(systemName: "trash")
             return delete
@@ -166,7 +156,7 @@ extension TaskListViewController {
                         taskList[indexPath.row].title = taskName
                         tableView.reloadRows(at: [indexPath], with: .automatic)
                     }
-                    saveContext()
+                    StorageManager.shared.saveContext()
                 }
                 
                 alert.addTextField()
