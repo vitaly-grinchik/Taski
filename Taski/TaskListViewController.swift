@@ -9,9 +9,6 @@ import UIKit
 
 class TaskListViewController: UITableViewController {
     
-    // Доступ к зоне ОЗУ с объектами БД
-    private let viewContext = StorageManager.shared.persistentContainer.viewContext
-    
     private let cellID = "taskCell"
     
     private var taskList = [Task]()
@@ -73,7 +70,7 @@ class TaskListViewController: UITableViewController {
             guard let taskName = alert.textFields?.first?.text else { return }
             if !taskName.isEmpty {
                 // Инициализация экземпляра модели в контексте
-                let task = Task(context: viewContext)
+                let task = Task(context: StorageManager.shared.persistentContainer.viewContext)
                 task.title = taskName
                 taskList.append(task)
                 let indexPath = IndexPath(row: taskList.count - 1, section: 0)
@@ -96,7 +93,7 @@ class TaskListViewController: UITableViewController {
         let fetchRequest = Task.fetchRequest()
         // Пробуем извлечь данные
         do {
-            taskList = try viewContext.fetch(fetchRequest)
+            taskList = try StorageManager.shared.persistentContainer.viewContext.fetch(fetchRequest)
         } catch {
             print(error.localizedDescription)
         }
@@ -130,7 +127,7 @@ extension TaskListViewController {
             let delete = UIContextualAction(style: .destructive, title: "")
             { [unowned self] _, _, _ in
                 let task = taskList.remove(at: indexPath.row)
-                viewContext.delete(task)
+                StorageManager.shared.persistentContainer.viewContext.delete(task)
                 tableView.deleteRows(at: [indexPath], with: .automatic)
                 StorageManager.shared.saveContext()
             }
@@ -186,6 +183,32 @@ extension TaskListViewController {
     
     override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         taskList.isEmpty ? "No task found" : nil
+    }
+    
+}
+
+extension TaskListViewController {
+    
+    private func showAlert(withTitle title: String,
+                           withMessage message: String?,
+                           numberOfTextFields: Int = 0,
+                           actions: UIAlertAction?...)
+    {
+        let alert = UIAlertController(title: title,
+                                      message: message,
+                                      preferredStyle: .alert)
+        
+        if numberOfTextFields > 0 {
+            for _ in 1...numberOfTextFields {
+                alert.addTextField()
+            }
+        }
+        // Extract actions and add to alert controller
+        let actualActions = actions.compactMap { $0 }
+        if !actualActions.isEmpty {
+            actualActions.forEach { alert.addAction($0) }
+        }
+        
     }
     
 }
